@@ -5,10 +5,10 @@ import os
 
 from split_document import split_documents_with_metadata
 
+load_dotenv()
 
 def store_vectors(directory, index_name="voice-agent"):
     # Load environment variables
-    load_dotenv()
 
     # Initialize Pinecone
     api_key = os.getenv("PINECONE_API_KEY")
