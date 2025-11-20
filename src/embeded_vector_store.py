@@ -6,7 +6,7 @@ import os
 from split_document import split_documents_with_metadata
 
 
-def store_vectors(directory, index_name="voice-agent", namespace="BD"):
+def store_vectors(directory, index_name="voice-agent"):
     # Load environment variables
     load_dotenv()
 
@@ -51,9 +51,9 @@ def store_vectors(directory, index_name="voice-agent", namespace="BD"):
         })
 
     # Upsert into Pinecone
-    index.upsert(vectors=vectors, namespace=namespace)
+    index.upsert(vectors=vectors)
 
-    print(f"Stored {len(vectors)} vectors in namespace '{namespace}'.")
+    print(f"Stored {len(vectors)} vectors.")
 
 
 if __name__ == "__main__":
