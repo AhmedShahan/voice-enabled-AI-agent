@@ -1,11 +1,11 @@
-from langchain_core.prompts import PromptTemplate
+import asyncio
+from langchain_core.prompts import ChatPromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_huggingface import HuggingFaceEmbeddings
 from pinecone import Pinecone
 from dotenv import load_dotenv
 import os
-from langchain_core.prompts import ChatPromptTemplate
 
 # Load environment variables
 load_dotenv()
@@ -20,7 +20,7 @@ index = pc.Index(index_name)
 # Initialize embedding model
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-########### LangChain Components ###########
+# LangChain Components
 MessageRag = [
     ("system", "You are a Smart AI RAG-based assistant. Answer ONLY from context."),
     ("human", """
@@ -37,13 +37,8 @@ prompt = ChatPromptTemplate.from_messages(MessageRag)
 parser = StrOutputParser()
 chain = prompt | llm | parser
 
-########### While Loop ###########
-while True:
-    query = input("Enter your question (or type 'exit' to quit): ")
-    if query.lower() == "exit":
-        print("Goodbye!")
-        break
-
+# Async RAG function
+async def rag_query(query: str):
     # Embed query
     query_emb = embedding.embed_query(query)
 
@@ -54,5 +49,21 @@ while True:
     context = "\n".join([item['metadata'].get('text', '') for item in result['matches']])
 
     # Run RAG
-    final_answer = chain.invoke({"context": context, "question": query})
-    print("\nAnswer:", final_answer)
+    final_answer = await chain.ainvoke({"context": context, "question": query})
+    return final_answer
+
+# Async loop
+async def main():
+    print("Type 'exit' to quit.")
+    while True:
+        query = input("Enter your question: ")
+        if query.lower() == "exit":
+            print("Goodbye!")
+            break
+
+        answer = await rag_query(query)
+        print("\nAnswer:", answer)
+
+# Run the async loop
+if __name__ == "__main__":
+    asyncio.run(main())
