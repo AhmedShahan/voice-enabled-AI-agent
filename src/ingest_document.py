@@ -1,6 +1,6 @@
 from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader
 
-def load_pdf_documents(directory_path):
+def ingest_pdf_documents(directory_path):
     """
     Load all PDF documents from the specified directory and return them.
     
@@ -21,7 +21,7 @@ def load_pdf_documents(directory_path):
 
 if __name__ == "__main__":
     directory = "/home/shahanahmed/voice-enabled-AI-agent/documents"
-    documents = load_pdf_documents(directory)
+    documents = ingest_pdf_documents(directory)
 
     for doc in documents:
         print("Metadata:", doc.metadata)
