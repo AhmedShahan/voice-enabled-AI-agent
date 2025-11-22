@@ -32,7 +32,7 @@ services:
       
       # Mount workflows for development (optional - remove in production)
       - ./workflows:/app/workflows:ro
-      - ./workflow_execution.py:/app/workflow_execution.py:ro
+      - ./ingest_vectorDB_workflowingest_vectorDB_workflow.py:/app/ingest_vectorDB_workflow.py:ro
       - ./config.yaml:/app/config.yaml:ro
     
     networks:

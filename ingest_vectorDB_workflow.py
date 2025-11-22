@@ -11,7 +11,7 @@ import yaml
 import logging
 from pathlib import Path
 from dotenv import load_dotenv
-from workflows.main_workflow import AsyncRAGWorkflow
+from workflow.main_workflow import AsyncRAGWorkflow
 
 # Load environment variables
 load_dotenv()

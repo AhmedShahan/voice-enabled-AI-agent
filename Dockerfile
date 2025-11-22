@@ -30,4 +30,4 @@ ENV PYTHONUNBUFFERED=1
 ENV TOKENIZERS_PARALLELISM=false
 
 # Run the workflow
-CMD ["python", "workflow_execution.py"]
+CMD ["python", "ingest_vectorDB_workflow.py"]
