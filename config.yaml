@@ -1,0 +1,30 @@
+# config.yaml
+# Workflow configuration file
+
+# Document Processing
+document_processing:
+  folder_path: /app/documents
+  chunk_size: 1500
+  chunk_overlap: 300
+
+# Vector Store
+vector_store:
+  index_name: my-custom-index
+  embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  dimension: 384
+  metric: cosine
+
+# Processing
+processing:
+  batch_size: 100
+  async_enabled: true
+
+# Pinecone Configuration
+pinecone:
+  cloud: aws
+  region: us-east-1
+  
+# Logging
+logging:
+  level: INFO
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

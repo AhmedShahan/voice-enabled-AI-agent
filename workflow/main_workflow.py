@@ -17,19 +17,19 @@ class AsyncRAGWorkflow:
     
     async def run_full_workflow_async(self):
         """Execute the complete RAG pipeline workflow asynchronously."""
-        print("🚀 Starting ASYNC RAG Pipeline Workflow...")
-        print(f"📁 Document folder: {self.document_folder_path}")
-        print(f"📄 Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}")
-        print(f"🔍 Index: {self.index_name}")
-        print(f"🤖 Embedding model: {self.embedding_model}")
-        print(f"⚡ Batch size: {self.batch_size} (for async processing)")
+        print("Starting ASYNC RAG Pipeline Workflow...")
+        print(f"Document folder: {self.document_folder_path}")
+        print(f"Chunk size: {self.chunk_size}, Overlap: {self.chunk_overlap}")
+        print(f"Index: {self.index_name}")
+        print(f"Embedding model: {self.embedding_model}")
+        print(f"Batch size: {self.batch_size} (for async processing)")
         print("-" * 60)
         
         start_time = asyncio.get_event_loop().time()
         
         try:
             # Step 1: Document Splitting (synchronous - can't be async)
-            print("1️⃣ Splitting documents...")
+            print("Splitting documents...")
             splitter = DocumentSplitting(
                 directory_path=self.document_folder_path,
                 chunk_size=self.chunk_size,
@@ -38,11 +38,11 @@ class AsyncRAGWorkflow:
             split_docs = splitter.split_documents_with_metadata()
             
             if not split_docs:
-                print("❌ No documents to process!")
+                print("No documents to process!")
                 return 0
             
             # Step 2: Vector Embedding and Storage (asynchronous)
-            print("2️⃣ Embedding and storing vectors (ASYNC)...")
+            print("Embedding and storing vectors (ASYNC)...")
             embedder = AsyncVectorEmbedding(
                 index_name=self.index_name,
                 embedding_model=self.embedding_model
@@ -54,16 +54,16 @@ class AsyncRAGWorkflow:
             processing_time = end_time - start_time
             
             print("-" * 60)
-            print(f"✅ Workflow completed successfully!")
-            print(f"📊 Total chunks processed: {len(split_docs)}")
-            print(f"📊 Total vectors stored: {vector_count}")
-            print(f"⏱️  Processing time: {processing_time:.2f} seconds")
-            print(f"⚡ Speed: {vector_count/processing_time:.2f} vectors/second")
+            print(f"Workflow completed successfully!")
+            print(f"Total chunks processed: {len(split_docs)}")
+            print(f"Total vectors stored: {vector_count}")
+            print(f"Processing time: {processing_time:.2f} seconds")
+            print(f"Speed: {vector_count/processing_time:.2f} vectors/second")
             
             return vector_count
             
         except Exception as e:
-            print(f"❌ Error in workflow: {str(e)}")
+            print(f"Error in workflow: {str(e)}")
             raise
 
 def main():

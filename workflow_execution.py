@@ -1,127 +1,153 @@
-# run_async_workflow.py
+# workflow_execution.py
 """
-Async workflow runner for the RAG pipeline.
-This file runs the workflow asynchronously for maximum speed.
+Main entry point for Docker container workflow execution.
+This script reads configuration from environment variables and config.yaml,
+then executes the RAG pipeline workflow.
 """
 
-from workflow.main_workflow import AsyncRAGWorkflow
-import asyncio
 import os
+import asyncio
+import yaml
+import logging
+from pathlib import Path
 from dotenv import load_dotenv
+from workflows.main_workflow import AsyncRAGWorkflow
 
+# Load environment variables
 load_dotenv()
 
-async def run_custom_async_workflow():
-    """Run a custom async RAG workflow with specific parameters."""
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+def load_config(config_file="config.yaml"):
+    """Load configuration from YAML file."""
+    try:
+        with open(config_file, 'r') as f:
+            config = yaml.safe_load(f)
+        logger.info(f"✅ Configuration loaded from {config_file}")
+        return config
+    except Exception as e:
+        logger.warning(f"⚠️  Could not load config file: {e}. Using environment variables only.")
+        return {}
+
+def get_workflow_config():
+    """
+    Get workflow configuration from environment variables or config file.
+    Environment variables take precedence over config file.
+    """
+    config_file = load_config()
     
-    # Define your custom configuration
-    config = {
-        "document_folder_path": "/home/shahanahmed/voice-enabled-AI-agent/documents",
-        "chunk_size": 1500,
-        "chunk_overlap": 300,
-        "index_name": "my-custom-index",
-        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-        "batch_size": 100  # Larger batch size for better async performance
+    # Get configuration with priority: ENV > config.yaml > default
+    document_folder_path = os.getenv(
+        "DOCUMENT_FOLDER_PATH",
+        config_file.get("document_processing", {}).get("folder_path", "/app/documents")
+    )
+    
+    chunk_size = int(os.getenv(
+        "CHUNK_SIZE",
+        config_file.get("document_processing", {}).get("chunk_size", 1500)
+    ))
+    
+    chunk_overlap = int(os.getenv(
+        "CHUNK_OVERLAP",
+        config_file.get("document_processing", {}).get("chunk_overlap", 300)
+    ))
+    
+    index_name = os.getenv(
+        "INDEX_NAME",
+        config_file.get("vector_store", {}).get("index_name", "my-custom-index")
+    )
+    
+    embedding_model = os.getenv(
+        "EMBEDDING_MODEL",
+        config_file.get("vector_store", {}).get("embedding_model", "sentence-transformers/all-MiniLM-L6-v2")
+    )
+    
+    batch_size = int(os.getenv(
+        "BATCH_SIZE",
+        config_file.get("processing", {}).get("batch_size", 100)
+    ))
+    
+    return {
+        "document_folder_path": document_folder_path,
+        "chunk_size": chunk_size,
+        "chunk_overlap": chunk_overlap,
+        "index_name": index_name,
+        "embedding_model": embedding_model,
+        "batch_size": batch_size
     }
+
+def validate_environment():
+    """Validate required environment variables and paths."""
+    errors = []
     
-    print("⚡🚀 Running CUSTOM ASYNC RAG Workflow")
-    print("=" * 60)
-    print("Configuration:")
+    # Check for required API keys
+    if not os.getenv("PINECONE_API_KEY"):
+        errors.append("PINECONE_API_KEY is not set")
+    
+    # Check if document folder exists and has files
+    config = get_workflow_config()
+    doc_path = Path(config["document_folder_path"])
+    
+    if not doc_path.exists():
+        errors.append(f"Document folder does not exist: {doc_path}")
+    elif not list(doc_path.glob("*.pdf")):
+        errors.append(f"No PDF files found in: {doc_path}")
+    
+    if errors:
+        logger.error("❌ Validation failed:")
+        for error in errors:
+            logger.error(f"   - {error}")
+        return False
+    
+    logger.info("✅ Environment validation passed")
+    return True
+
+async def main():
+    """Main execution function."""
+    logger.info("=" * 70)
+    logger.info("🚀 RAG WORKFLOW EXECUTION - DOCKER CONTAINER")
+    logger.info("=" * 70)
+    
+    # Validate environment
+    if not validate_environment():
+        logger.error("❌ Exiting due to validation errors")
+        return 1
+    
+    # Get configuration
+    config = get_workflow_config()
+    
+    logger.info("📋 Workflow Configuration:")
     for key, value in config.items():
-        print(f"  {key}: {value}")
-    print("=" * 60)
+        logger.info(f"   {key}: {value}")
+    logger.info("=" * 70)
     
     try:
-        # Initialize and run the async workflow
+        # Initialize workflow
         workflow = AsyncRAGWorkflow(**config)
+        
+        # Execute workflow
         vector_count = await workflow.run_full_workflow_async()
         
-        print(f"\n✅ Custom async workflow completed successfully!")
-        print(f"🎯 Stored {vector_count} vectors in the knowledge base!")
+        logger.info("=" * 70)
+        logger.info(f"✅ WORKFLOW COMPLETED SUCCESSFULLY!")
+        logger.info(f"📊 Total vectors stored: {vector_count}")
+        logger.info("=" * 70)
+        
+        return 0
         
     except Exception as e:
-        print(f"\n❌ Error running custom async workflow: {str(e)}")
-        raise
-
-async def run_performance_comparison():
-    """Run multiple configurations to compare performance."""
-    
-    configurations = [
-        {
-            "document_folder_path": "/home/shahanahmed/voice-enabled-AI-agent/documents",
-            "chunk_size": 1000,
-            "chunk_overlap": 200,
-            "index_name": "performance-test-small",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "batch_size": 50
-        },
-        {
-            "document_folder_path": "/home/shahanahmed/voice-enabled-AI-agent/documents",
-            "chunk_size": 1500,
-            "chunk_overlap": 300,
-            "index_name": "performance-test-medium",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "batch_size": 100
-        },
-        {
-            "document_folder_path": "/home/shahanahmed/voice-enabled-AI-agent/documents",
-            "chunk_size": 2000,
-            "chunk_overlap": 400,
-            "index_name": "performance-test-large",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
-            "batch_size": 150
-        }
-    ]
-    
-    print("⚡📊 Running Performance Comparison")
-    print("=" * 70)
-    
-    results = []
-    
-    for i, config in enumerate(configurations, 1):
-        print(f"\n🔄 Testing configuration {i}/{len(configurations)}")
-        print(f"   Index: {config['index_name']}")
-        print(f"   Chunk: {config['chunk_size']}, Overlap: {config['chunk_overlap']}")
-        print(f"   Batch: {config['batch_size']}")
-        print("-" * 70)
-        
-        try:
-            workflow = AsyncRAGWorkflow(**config)
-            start_time = asyncio.get_event_loop().time()
-            vector_count = await workflow.run_full_workflow_async()
-            end_time = asyncio.get_event_loop().time()
-            
-            processing_time = end_time - start_time
-            speed = vector_count / processing_time if processing_time > 0 else 0
-            
-            results.append({
-                "config": config["index_name"],
-                "vectors": vector_count,
-                "time": processing_time,
-                "speed": speed
-            })
-            
-            print(f"✅ Configuration {i} completed in {processing_time:.2f}s")
-            
-        except Exception as e:
-            print(f"❌ Configuration {i} failed: {str(e)}")
-            continue
-    
-    # Print summary
-    if results:
-        print("\n" + "="*70)
-        print(" PERFORMANCE SUMMARY ")
-        print("="*70)
-        for result in results:
-            print(f"{result['config']}: {result['speed']:.2f} vectors/sec")
-        
-        best = max(results, key=lambda x: x['speed'])
-        print(f"\n🏆 Fastest configuration: {best['config']} "
-              f"({best['speed']:.2f} vectors/sec)")
+        logger.error("=" * 70)
+        logger.error(f"❌ WORKFLOW FAILED: {str(e)}")
+        logger.error("=" * 70)
+        import traceback
+        traceback.print_exc()
+        return 1
 
 if __name__ == "__main__":
-    # Run single custom async workflow
-    asyncio.run(run_custom_async_workflow())
-    
-    # Uncomment to run performance comparison
-    # asyncio.run(run_performance_comparison())
+    exit_code = asyncio.run(main())
+    exit(exit_code)
