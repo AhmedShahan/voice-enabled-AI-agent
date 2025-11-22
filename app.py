@@ -30,7 +30,7 @@ def load_whisper():
     from transformers import pipeline
     return pipeline(
         "automatic-speech-recognition",
-        model="openai/whisper-tiny",  # Use "whisper-base" for better accuracy
+        model="openai/whisper-tiny",
         chunk_length_s=30
     )
 
@@ -44,16 +44,13 @@ def transcribe_audio(audio_bytes) -> tuple[str, float]:
     try:
         asr = load_whisper()
         
-        # Save to temp file (Whisper needs a file path)
         with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
             f.write(audio_bytes)
             temp_path = f.name
         
-        # Transcribe
         result = asr(temp_path)
         text = result["text"].strip()
         
-        # Cleanup
         Path(temp_path).unlink(missing_ok=True)
         
         return text, time.time() - start
@@ -69,7 +66,6 @@ def run_async(coro):
     try:
         loop = asyncio.get_event_loop()
         if loop.is_running():
-            # If loop is running (e.g., in Jupyter), create new loop
             import nest_asyncio
             nest_asyncio.apply()
             return loop.run_until_complete(coro)
@@ -84,6 +80,8 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "show_metrics" not in st.session_state:
     st.session_state.show_metrics = True
+if "last_audio_id" not in st.session_state:
+    st.session_state.last_audio_id = None
 
 # =============================================================================
 # HEADER
@@ -108,6 +106,7 @@ with st.sidebar:
     
     if st.button("🗑️ Clear Chat"):
         st.session_state.messages = []
+        st.session_state.last_audio_id = None
         st.rerun()
     
     st.divider()
@@ -140,19 +139,26 @@ for msg in st.session_state.messages:
 query = None
 stt_time = 0.0
 
-# Handle voice input
+# Handle voice input - CHECK IF IT'S NEW AUDIO
 if audio_input:
-    with st.spinner("🎧 Transcribing..."):
-        query, stt_time = transcribe_audio(audio_input.getvalue())
-        if query and not query.startswith("Transcription error"):
-            st.sidebar.success(f"**Heard:** {query}")
-        else:
-            st.sidebar.error(query)
-            query = None
+    # Create unique ID for this audio based on its content
+    audio_id = hash(audio_input.getvalue())
+    
+    # Only process if this is NEW audio (not already processed)
+    if audio_id != st.session_state.last_audio_id:
+        with st.spinner("🎧 Transcribing..."):
+            query, stt_time = transcribe_audio(audio_input.getvalue())
+            if query and not query.startswith("Transcription error"):
+                st.sidebar.success(f"**Heard:** {query}")
+                # Mark this audio as processed
+                st.session_state.last_audio_id = audio_id
+            else:
+                st.sidebar.error(query)
+                query = None
 
-# Handle text input (only if no voice)
+# Handle text input
 text_input = st.chat_input("Type your message...")
-if text_input and not audio_input:
+if text_input:
     query = text_input
     stt_time = 0.0
 
@@ -171,7 +177,6 @@ if query:
         with st.spinner("🤔 Thinking..."):
             start = time.time()
             
-            # Call your RAG (async)
             response, metrics = run_async(process_query(query, return_metrics=True))
             
             process_time = time.time() - start
