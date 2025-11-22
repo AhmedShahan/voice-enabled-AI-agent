@@ -11,7 +11,7 @@ load_dotenv()
 
 # Initialize
 pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
-index = pc.Index("voice-agent")
+index = pc.Index("my-custom-index")
 embedding = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.8)
 
