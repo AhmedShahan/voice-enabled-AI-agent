@@ -1,4 +1,3 @@
-# workflows/main_workflow.py
 from workflow.document_split import DocumentSplitting
 from workflow.vector_embedding import AsyncVectorEmbedding
 import os
@@ -69,8 +68,8 @@ class AsyncRAGWorkflow:
 def main():
     # Configuration
     DOCUMENT_FOLDER_PATH = "/home/shahanahmed/voice-enabled-AI-agent/documents"
-    CHUNK_SIZE = 1500
-    CHUNK_OVERLAP = 300
+    CHUNK_SIZE = 2000
+    CHUNK_OVERLAP = 500
     INDEX_NAME = "my-custom-index"
     EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
     BATCH_SIZE = 50  # Adjust based on your system's capabilities

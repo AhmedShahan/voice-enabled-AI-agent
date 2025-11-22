@@ -16,7 +16,7 @@ class DocumentSplitting:
             list: List of dictionaries, each with 'content' and 'metadata'.
         """
         # Load documents
-        documents = self.ingestor.ingest_pdf_documents()
+        documents = self.ingestor.ingest_documents()
 
         # Configure text splitter
         splitter = RecursiveCharacterTextSplitter(
