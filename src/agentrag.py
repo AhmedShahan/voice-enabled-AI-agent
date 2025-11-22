@@ -123,7 +123,7 @@ Respond with ONLY one word: weather, document, or general"""),
 # =============================================================================
 async def rag_search(query: str) -> Tuple[str, float]:
     query_emb = await get_query_embedding(query)
-    results = index.query(vector=query_emb, top_k=5, include_metadata=True)
+    results = index.query(vector=query_emb, top_k=10, include_metadata=True)
     if not results['matches']:
         return "", 0.0
     top_score = max(m['score'] for m in results['matches'])
